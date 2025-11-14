@@ -1,0 +1,20 @@
+[project]
+name = "basket-optimizer"
+version = "0.1.0"
+description = "PaketAI case study 👨‍🍳"
+authors = [{ name = "orhantugrul", email = "orhantugrulsahin@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pydantic>=2.12.4",
+    "sanic-cors>=2.2.0",
+    "sanic[ext]>=25.3.0",
+]
+
+[dependency-groups]
+dev = [
+    "commitizen>=4.10.0",
+    "pre-commit>=4.4.0",
+    "pytest>=9.0.1",
+    "ruff>=0.14.4",
+]

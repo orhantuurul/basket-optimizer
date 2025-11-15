@@ -32,8 +32,8 @@ class BasketsCreate(BaseModel):
 
   orders: list[Order] = Field(description="List of orders")
   radius: float = Field(
-    default=1.0,
-    ge=1.0,
+    default=0.5,
+    ge=0.5,
     le=10.0,
     description="Maximum radius for each basket in kilometers",
   )

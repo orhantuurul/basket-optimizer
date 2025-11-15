@@ -1,37 +1,24 @@
 from .type import Basket, BasketsCreate
-from .util import (
-  calculate_basket_center,
-  calculate_basket_radius,
-  cluster_orders,
-)
+from .util import calculate_basket_center, cluster_orders
 
 
 async def create_baskets(body: BasketsCreate) -> list:
   if not body.orders:
     return []
 
-  baskets = []
+  # Cluster orders using diameter constraint
   clusters = cluster_orders(body.orders, body.radius)
 
-  for cluster in set(clusters):
-    if cluster == -1:
-      continue
-
-    mask = clusters == cluster
-    orders = [
-      body.orders[index]
-      for index, is_in_cluster in enumerate(mask)
-      if is_in_cluster
-    ]
-
-    latitude, longitude = calculate_basket_center(orders)
-    radius = calculate_basket_radius((latitude, longitude), orders)
+  baskets = []
+  for cluster in clusters:
+    # Calculate the geometric center of the cluster
+    latitude, longitude = calculate_basket_center(cluster)
 
     basket = Basket(
       latitude=latitude,
       longitude=longitude,
-      radius=round(radius, 3),
-      orders=orders,
+      radius=body.radius,
+      orders=cluster,
     )
     baskets.append(basket)
 

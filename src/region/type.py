@@ -1,11 +1,13 @@
 from typing import Literal, Union
 
-from pydantic import BaseModel, RootModel
+from pydantic import BaseModel, ConfigDict, RootModel
 from sanic_ext import openapi
 
 
 @openapi.component(name="Region")
 class Region(BaseModel):
+  model_config = ConfigDict(from_attributes=True)
+
   name: str
   type: Literal["Polygon", "MultiPolygon"]
   coordinates: Union[

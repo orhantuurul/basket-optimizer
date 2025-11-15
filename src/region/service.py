@@ -16,4 +16,4 @@ async def get_regions() -> list[Region]:
       region = Region(name=name, type=type, coordinates=coordinates)
       regions.append(region)
 
-    return sorted(regions, key=lambda region: region.name)
+    return regions

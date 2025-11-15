@@ -3,6 +3,7 @@ from sanic import Blueprint, Sanic
 from .basket.route import route as basket_route
 from .config import Config
 from .errorhandler import ErrorHandler
+from .order.route import route as order_route
 from .region.route import route as region_route
 
 
@@ -23,6 +24,7 @@ def with_routes(app: Sanic):
   app.blueprint(
     Blueprint.group(
       basket_route,
+      order_route,
       region_route,
       url_prefix="/api",
     ),

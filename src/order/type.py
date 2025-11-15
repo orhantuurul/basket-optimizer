@@ -3,40 +3,31 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 from sanic_ext import openapi
 
-from ..order.type import Order
 
-
-@openapi.component(name="Basket")
-class Basket(BaseModel):
+@openapi.component(name="Order")
+class Order(BaseModel):
   model_config = ConfigDict(from_attributes=True)
 
   latitude: float
   longitude: float
-  radius: float
-  orders: list[Order]
 
   @classmethod
   def json(cls) -> dict[str, Any]:
     return cls.model_json_schema(ref_template="#/components/schemas/{model}")
 
 
-class Baskets(RootModel[list[Basket]]):
+class Orders(RootModel[list[Order]]):
   @classmethod
   def json(cls) -> dict[str, Any]:
     return cls.model_json_schema(ref_template="#/components/schemas/{model}")
 
 
-@openapi.component(name="BasketsCreate")
-class BasketsCreate(BaseModel):
+@openapi.component(name="OrdersCreate")
+class OrderCreate(BaseModel):
   model_config = ConfigDict(from_attributes=True)
 
-  orders: list[Order] = Field(description="List of orders")
-  radius: float = Field(
-    default=1.0,
-    ge=1.0,
-    le=10.0,
-    description="Maximum radius for each basket in kilometers",
-  )
+  regions: list[str] = Field(description="List of region names")
+  count: int = Field(default=1_000, ge=1, le=10_000)
 
   @classmethod
   def json(cls) -> dict[str, Any]:

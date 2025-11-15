@@ -1,4 +1,4 @@
-from sanic import Blueprint, json
+from sanic import Blueprint, Request, json
 from sanic.response import JSONResponse
 from sanic_ext import openapi
 
@@ -10,7 +10,7 @@ route = Blueprint("region", url_prefix="/regions")
 
 @route.get("/")
 @openapi.response(200, {"application/json": Regions.json()})
-async def get_regions(_) -> JSONResponse:
+async def get_regions(_: Request) -> JSONResponse:
   """Get regions"""
   regions = await service.get_regions()
   return json([region.model_dump() for region in regions])

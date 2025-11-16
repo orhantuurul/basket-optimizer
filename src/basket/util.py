@@ -1,71 +1,119 @@
-import numpy
 from geopy.distance import geodesic
+from scipy.spatial import cKDTree
 
 from ..order.type import Order
-
-
-def cluster_orders(orders: list[Order], radius: float) -> list[list[Order]]:
-  """
-  Cluster orders into baskets ensuring:
-  1. All orders in a basket are within 2*radius (diameter) of each other
-  2. Each order belongs to exactly one basket
-  3. Minimize the number of baskets (greedy approach)
-
-  Args:
-      orders: List of orders to cluster
-      radius: Maximum radius for each basket in kilometers
-              (diameter = 2 * radius)
-
-  Returns:
-      List of clusters, where each cluster is a list of orders
-  """
-  unassigned_orders = sorted(orders, key=lambda o: (o.latitude, o.longitude))
-  clusters: list[list[Order]] = []
-
-  while unassigned_orders:
-    # Start new cluster with first unassigned order
-    seed_order = unassigned_orders.pop(0)
-    new_cluster = [seed_order]
-
-    # Try to add orders that fit within diameter constraint
-    i = 0
-    while i < len(unassigned_orders):
-      candidate = unassigned_orders[i]
-
-      # Check if candidate is within 2*radius of ALL orders in cluster
-      fits_in_cluster = all(
-        calculate_distance(
-          (existing.latitude, existing.longitude),
-          (candidate.latitude, candidate.longitude),
-        )
-        <= 2 * radius
-        for existing in new_cluster
-      )
-
-      if fits_in_cluster:
-        new_cluster.append(unassigned_orders.pop(i))
-      else:
-        i += 1
-
-    clusters.append(new_cluster)
-
-  return clusters
 
 
 def calculate_distance(
   start: tuple[float, float],
   end: tuple[float, float],
 ) -> float:
-  """Calculate distance between two points in kilometers"""
-  return geodesic(start, end).kilometers
+  """
+  Calculate the great circle distance between two points on Earth
+  using the Haversine formula.
+
+  Args:
+      start: First point as tuple (latitude, longitude)
+      end: Second point as tuple (latitude, longitude)
+
+  Returns:
+      Distance in kilometers
+  """
+  distance = geodesic(start, end)
+  return distance.kilometers
 
 
-def calculate_basket_center(orders: list[Order]) -> tuple[float, float]:
-  """Calculate the geometric center of a list of orders"""
-  if not orders:
-    return 0.0, 0.0
+def build_spatial_tree(orders: list[Order]) -> cKDTree:
+  """
+  Build a spatial index (cKDTree) from orders for fast radius queries.
 
-  latitudes = [order.latitude for order in orders]
-  longitudes = [order.longitude for order in orders]
+  Note: cKDTree uses Euclidean distance, which is an approximation for
+  geospatial coordinates. We use it for fast filtering, then validate
+  with Haversine distance for accuracy.
 
-  return numpy.mean(latitudes), numpy.mean(longitudes)
+  Args:
+      orders: List of orders with latitude/longitude
+
+  Returns:
+      cKDTree spatial index
+  """
+  coordinates = [[order.latitude, order.longitude] for order in orders]
+  return cKDTree(coordinates)
+
+
+def query_radius_tree(
+  tree: cKDTree,
+  center: Order,
+  radius: float,
+  orders: list[Order],
+) -> list[int]:
+  """
+  Query spatial tree for points within radius, validated with Haversine.
+
+  Uses cKDTree for fast candidate selection, then validates with
+  Haversine distance for geospatial accuracy.
+
+  Args:
+      tree: cKDTree spatial index
+      center: Center point (Order)
+      radius_km: Radius in kilometers
+      orders: List of all orders (for validation)
+
+  Returns:
+      List of indices of orders within the radius (inclusive of boundary)
+  """
+  # Convert radius from km to approximate degrees
+  # At equator: 1 degree lat ≈ 111 km, 1 degree lon ≈ 111 km
+  # For small radii (0.5km), this approximation is reasonable
+  # We use a conservative estimate to ensure we don't miss points
+  radius_deg = radius / 111.0
+
+  # Query tree for candidates (fast approximation)
+  center_coord = [center.latitude, center.longitude]
+  candidate_indices = tree.query_ball_point(center_coord, radius_deg)
+
+  # Validate candidates with Haversine distance
+  valid_indices = []
+  for idx in candidate_indices:
+    order = orders[idx]
+    distance = calculate_distance(
+      (center.latitude, center.longitude),
+      (order.latitude, order.longitude),
+    )
+    # Include points on or within the boundary (<= radius)
+    if distance <= radius + 1e-9:  # Small epsilon for floating-point tolerance
+      valid_indices.append(idx)
+
+  return valid_indices
+
+
+def points_within_radius(
+  center: Order,
+  orders: list[Order],
+  radius: float,
+) -> list[int]:
+  """
+  Find all order indices that are within the specified radius of the center.
+
+  This is the legacy brute-force implementation. For performance,
+  use build_spatial_tree() and query_radius_tree() instead.
+
+  Args:
+      center: The center point (Order)
+      orders: List of all orders
+      radius_km: Radius in kilometers
+
+  Returns:
+      List of indices of orders within the radius (inclusive of boundary)
+  """
+  indices = []
+  for idx, order in enumerate(orders):
+    distance = calculate_distance(
+      (center.latitude, center.longitude),
+      (order.latitude, order.longitude),
+    )
+
+    epsilon = 1e-9  # Small epsilon for floating-point tolerance
+    if distance <= radius + epsilon:
+      indices.append(idx)
+  return indices

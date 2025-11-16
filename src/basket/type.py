@@ -31,12 +31,6 @@ class BasketsCreate(BaseModel):
   model_config = ConfigDict(from_attributes=True)
 
   orders: list[Order] = Field(description="List of orders")
-  radius: float = Field(
-    default=0.5,
-    ge=0.5,
-    le=10.0,
-    description="Maximum radius for each basket in kilometers",
-  )
 
   @classmethod
   def json(cls) -> dict[str, Any]:

@@ -19,42 +19,13 @@ Geospatial basket allocation service that optimally groups orders into delivery 
 uv sync
 
 # Run the service
-uv run python -m src.main
+uv run sanic src.main:create_app --workers=4
 
 # Run tests
 uv run pytest
 
 # Run tests with coverage
 uv run pytest --cov=src --cov-report=html
-```
-
-## API
-
-### Create Baskets
-
-```http
-POST /baskets/batch
-Content-Type: application/json
-
-{
-  "orders": [
-    {"latitude": 40.7128, "longitude": -74.0060},
-    {"latitude": 40.7130, "longitude": -74.0062}
-  ]
-}
-```
-
-**Response:**
-
-```json
-[
-  {
-    "latitude": 40.7128,
-    "longitude": -74.0060,
-    "radius": 0.5,
-    "orders": [...]
-  }
-]
 ```
 
 ## Algorithm

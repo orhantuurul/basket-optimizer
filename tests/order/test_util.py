@@ -71,7 +71,6 @@ def test_point_in_polygon_deterministic_bounds():
 
 def test_point_in_polygon_complex_shape():
   """Test generating point in complex polygon shape."""
-  # L-shaped polygon
   polygon = Polygon([[0, 0], [5, 0], [5, 2], [2, 2], [2, 5], [0, 5], [0, 0]])
 
   x, y = point_in_polygon(polygon)

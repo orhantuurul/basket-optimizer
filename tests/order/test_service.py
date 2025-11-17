@@ -58,7 +58,6 @@ async def test_create_orders_multiple_regions():
     orders = await create_orders(body)
 
   assert len(orders) == 10
-  # Orders should be in either region's bounds
   all_in_bounds = all(
     (0 <= o.longitude <= 1 and 0 <= o.latitude <= 1)
     or (2 <= o.longitude <= 3 and 2 <= o.latitude <= 3)
@@ -155,7 +154,6 @@ async def test_create_orders_count_validation():
     coordinates=[[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]],
   )
 
-  # Test minimum count
   body = OrderCreate(regions=["TestRegion"], count=1)
   with patch(
     "src.order.service.region_service.get_regions",
@@ -165,7 +163,6 @@ async def test_create_orders_count_validation():
     orders = await create_orders(body)
     assert len(orders) == 1
 
-  # Test larger count
   body = OrderCreate(regions=["TestRegion"], count=100)
   with patch(
     "src.order.service.region_service.get_regions",
@@ -194,9 +191,7 @@ async def test_create_orders_deterministic_seed():
   ):
     orders = await create_orders(body)
 
-  # All orders should be within bounds
   assert all(0 <= o.longitude <= 10 for o in orders)
   assert all(0 <= o.latitude <= 10 for o in orders)
-  # Should have some variation (not all same point)
   unique_points = len(set((o.longitude, o.latitude) for o in orders))
   assert unique_points > 1

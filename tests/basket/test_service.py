@@ -42,8 +42,6 @@ async def test_identical_coordinates():
 @pytest.mark.asyncio
 async def test_dense_cluster():
   """Many orders within 0.5km should be in minimal baskets."""
-  # Create cluster around NYC (40.7128, -74.0060)
-  # 0.1km ≈ 0.0009 degrees
   base_lat, base_lon = 40.7128, -74.0060
   orders = [
     Order(latitude=base_lat + i * 0.0001, longitude=base_lon + i * 0.0001)
@@ -52,7 +50,6 @@ async def test_dense_cluster():
   body = BasketsCreate(orders=orders)
   baskets = await create_baskets(body)
 
-  # All should be in 1-2 baskets (depending on optimal solution)
   assert len(baskets) <= 2
   assert sum(len(b.orders) for b in baskets) == 10
 
@@ -60,16 +57,14 @@ async def test_dense_cluster():
 @pytest.mark.asyncio
 async def test_sparse_orders():
   """Orders far apart should require separate baskets."""
-  # Orders 1km apart (beyond 0.5km radius)
   orders = [
     Order(latitude=40.7128, longitude=-74.0060),
-    Order(latitude=40.7218, longitude=-74.0060),  # ~1km north
-    Order(latitude=40.7128, longitude=-73.9960),  # ~1km east
+    Order(latitude=40.7218, longitude=-74.0060),
+    Order(latitude=40.7128, longitude=-73.9960),
   ]
   body = BasketsCreate(orders=orders)
   baskets = await create_baskets(body)
 
-  # Each should be in separate basket
   assert len(baskets) == 3
   assert all(len(b.orders) == 1 for b in baskets)
 
@@ -77,11 +72,8 @@ async def test_sparse_orders():
 @pytest.mark.asyncio
 async def test_boundary_condition():
   """Orders exactly at 0.5km boundary should be included."""
-  # Center point
   center = Order(latitude=40.7128, longitude=-74.0060)
 
-  # Point exactly 0.5km away (approximately 0.0045 degrees)
-  # Using geopy to calculate exact offset
   from geopy.distance import geodesic
 
   point_05km = geodesic(kilometers=0.5).destination(
@@ -94,7 +86,6 @@ async def test_boundary_condition():
   body = BasketsCreate(orders=[center, boundary_order])
   baskets = await create_baskets(body)
 
-  # Should be in one basket (boundary included)
   assert len(baskets) == 1
   assert len(baskets[0].orders) == 2
 
@@ -109,14 +100,11 @@ async def test_all_orders_assigned():
   body = BasketsCreate(orders=orders)
   baskets = await create_baskets(body)
 
-  # Collect all assigned orders
   assigned = []
   for basket in baskets:
     assigned.extend(basket.orders)
 
-  # All orders must be assigned
   assert len(assigned) == len(orders)
-  # No duplicates
   assert len(assigned) == len(set((o.latitude, o.longitude) for o in assigned))
 
 
@@ -149,10 +137,8 @@ async def test_deterministic_results():
   baskets1 = await create_baskets(body)
   baskets2 = await create_baskets(body)
 
-  # Same number of baskets
   assert len(baskets1) == len(baskets2)
 
-  # Same basket structure (sorted by center for comparison)
   baskets1_sorted = sorted(
     baskets1, key=lambda b: (b.latitude, b.longitude, len(b.orders))
   )
@@ -168,11 +154,10 @@ async def test_deterministic_results():
 @pytest.mark.asyncio
 async def test_minimize_baskets():
   """Algorithm should minimize number of baskets."""
-  # Create 3 clusters, each with 5 orders within 0.5km
   clusters = [
-    (40.7128, -74.0060),  # NYC
-    (40.7228, -74.0060),  # ~1.1km north
-    (40.7128, -73.9960),  # ~1.1km east
+    (40.7128, -74.0060),
+    (40.7228, -74.0060),
+    (40.7128, -73.9960),
   ]
 
   orders = []
@@ -188,7 +173,6 @@ async def test_minimize_baskets():
   body = BasketsCreate(orders=orders)
   baskets = await create_baskets(body)
 
-  # Should use 3 baskets (one per cluster)
   assert len(baskets) == 3
   assert sum(len(b.orders) for b in baskets) == 15
 
@@ -196,7 +180,6 @@ async def test_minimize_baskets():
 @pytest.mark.asyncio
 async def test_precision_edge_cases():
   """Test floating-point precision handling."""
-  # Very close coordinates (precision edge case)
   orders = [
     Order(latitude=40.7128, longitude=-74.0060),
     Order(latitude=40.7128000001, longitude=-74.0060000001),
@@ -205,7 +188,6 @@ async def test_precision_edge_cases():
   body = BasketsCreate(orders=orders)
   baskets = await create_baskets(body)
 
-  # Should handle precision correctly
   assert len(baskets) >= 1
   assert sum(len(b.orders) for b in baskets) == 3
 
@@ -213,26 +195,22 @@ async def test_precision_edge_cases():
 @pytest.mark.asyncio
 async def test_mixed_density():
   """Mix of dense and sparse orders."""
-  # Dense cluster
   cluster_orders = [
     Order(latitude=40.7128 + i * 0.0001, longitude=-74.0060 + i * 0.0001)
     for i in range(8)
   ]
 
-  # Sparse orders (far away)
   sparse_orders = [
-    Order(latitude=40.7228, longitude=-74.0060),  # ~1.1km north
-    Order(latitude=40.7128, longitude=-73.9960),  # ~1.1km east
+    Order(latitude=40.7228, longitude=-74.0060),
+    Order(latitude=40.7128, longitude=-73.9960),
   ]
 
   body = BasketsCreate(orders=cluster_orders + sparse_orders)
   baskets = await create_baskets(body)
 
-  # Cluster should be in 1-2 baskets, sparse in separate
   assert len(baskets) >= 2
   assert sum(len(b.orders) for b in baskets) == 10
 
-  # Verify radius constraint
   for basket in baskets:
     center = (basket.latitude, basket.longitude)
     for order in basket.orders:
@@ -254,7 +232,6 @@ async def test_orders_just_outside_boundary():
   """Orders just beyond 0.5km should be in separate baskets."""
   center = Order(latitude=40.7128, longitude=-74.0060)
 
-  # Point just beyond 0.5km (0.51km)
   from geopy.distance import geodesic
 
   point_051km = geodesic(kilometers=0.51).destination(
@@ -267,6 +244,5 @@ async def test_orders_just_outside_boundary():
   body = BasketsCreate(orders=[center, outside_order])
   baskets = await create_baskets(body)
 
-  # Should be in separate baskets
   assert len(baskets) == 2
   assert all(len(b.orders) == 1 for b in baskets)

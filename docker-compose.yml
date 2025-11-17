@@ -1,0 +1,31 @@
+services:
+  basket-optimizer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: basket-optimizer
+    ports:
+      - "8080:8080"
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - basket-optimizer-network
+    restart: unless-stopped
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    container_name: dashboard
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://basket-optimizer:8080
+      - NODE_ENV=production
+    depends_on:
+      - basket-optimizer
+    networks:
+      - basket-optimizer-network
+    restart: unless-stopped
+networks:
+  basket-optimizer-network:
+    driver: bridge

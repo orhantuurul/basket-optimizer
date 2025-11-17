@@ -15,18 +15,17 @@ Geospatial basket allocation service that optimally groups orders into delivery 
 ## Quick Start
 
 ```bash
-# Install dependencies
-uv sync
+# Build and start all services in detached mode
+docker compose up -d
 
-# Run the service
-uv run sanic src.main:create_app --workers=4
+# View logs
+docker-compose logs -f
 
-# Run tests
-uv run pytest
-
-# Run tests with coverage
-uv run pytest --cov=src --cov-report=html
+# Stop services
+docker-compose down
 ```
+
+The API will be available at `http://localhost:8080` and the dashboard at `http://localhost:3000`.
 
 ## Algorithm
 

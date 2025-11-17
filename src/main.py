@@ -8,7 +8,10 @@ from .region.route import route as region_route
 
 
 def create_app():
-  app = Sanic("basket-optimizer", error_handler=ErrorHandler())
+  app = Sanic(
+    "basket-optimizer",
+    error_handler=ErrorHandler(),
+  )
 
   with_config(app)
   with_routes(app)

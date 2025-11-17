@@ -6,22 +6,31 @@ from .util import build_spatial_tree, query_radius_tree
 
 async def create_baskets(body: BasketsCreate) -> list[Basket]:
   """
-  Allocate orders into baskets using OR-Tools set cover optimization.
+  Allocates orders into baskets using OR-Tools set cover optimization.
 
-  Uses well-tested libraries:
-  - scipy.cKDTree for fast spatial queries
-  - OR-Tools for optimal set cover solution
+  Uses scipy.cKDTree for fast spatial queries and OR-Tools for optimal set
+  cover solution. The algorithm minimizes the number of baskets while
+  ensuring each basket has a strict radius of 0.5 km and every order is
+  assigned to exactly one basket.
 
-  The algorithm minimizes the number of baskets while ensuring:
-  - Each basket has a strict radius of 0.5 km
-  - Every order is assigned to exactly one basket
-  - The solution is optimal (not just greedy)
-
-  Algorithm:
-  1. Build spatial tree from all orders
+  The algorithm works as follows:
+  1. Build spatial tree from all orders for efficient radius queries
   2. For each order as potential center, find all orders within 0.5 km
   3. Use OR-Tools set cover solver to find minimum baskets covering all orders
-  4. Create baskets from the optimal solution
+  4. Create baskets from the optimal solution, handling unassigned orders
+
+  Args:
+    body: Request body containing list of orders to allocate.
+
+  Returns:
+    List of Basket objects, each containing orders within 0.5 km radius.
+    Each order is assigned to exactly one basket. If solver fails, falls
+    back to greedy assignment to ensure all orders are covered.
+
+  Note:
+    Uses CBC solver if available, otherwise falls back to SAT solver.
+    The solution is optimal when solver succeeds, otherwise uses greedy
+    approach to ensure complete coverage.
   """
   radius = 0.5
   orders = body.orders

@@ -8,7 +8,12 @@ from src.order.type import Order
 
 @pytest.mark.asyncio
 async def test_empty_orders():
-  """Empty input should return empty baskets."""
+  """
+  Tests basket creation with empty order list.
+
+  Verifies that when no orders are provided, the function returns
+  an empty list of baskets.
+  """
   body = BasketsCreate(orders=[])
   baskets = await create_baskets(body)
   assert baskets == []
@@ -16,7 +21,12 @@ async def test_empty_orders():
 
 @pytest.mark.asyncio
 async def test_single_order():
-  """Single order should create one basket."""
+  """
+  Tests basket creation with a single order.
+
+  Verifies that a single order creates exactly one basket with the
+  order's coordinates as the basket center and radius of 0.5 km.
+  """
   body = BasketsCreate(orders=[Order(latitude=40.7128, longitude=-74.0060)])
   baskets = await create_baskets(body)
 
@@ -29,7 +39,12 @@ async def test_single_order():
 
 @pytest.mark.asyncio
 async def test_identical_coordinates():
-  """Multiple orders at same location should be in one basket."""
+  """
+  Tests basket creation with multiple orders at identical coordinates.
+
+  Verifies that orders with the same location are grouped into a
+  single basket with radius 0.5 km.
+  """
   coords = Order(latitude=40.7128, longitude=-74.0060)
   body = BasketsCreate(orders=[coords, coords, coords])
   baskets = await create_baskets(body)
@@ -41,7 +56,12 @@ async def test_identical_coordinates():
 
 @pytest.mark.asyncio
 async def test_dense_cluster():
-  """Many orders within 0.5km should be in minimal baskets."""
+  """
+  Tests basket creation with dense order clusters.
+
+  Verifies that many orders within 0.5 km of each other are grouped
+  into minimal number of baskets, demonstrating optimization efficiency.
+  """
   base_lat, base_lon = 40.7128, -74.0060
   orders = [
     Order(latitude=base_lat + i * 0.0001, longitude=base_lon + i * 0.0001)
@@ -56,7 +76,12 @@ async def test_dense_cluster():
 
 @pytest.mark.asyncio
 async def test_sparse_orders():
-  """Orders far apart should require separate baskets."""
+  """
+  Tests basket creation with orders far apart.
+
+  Verifies that orders separated by more than 0.5 km are placed
+  in separate baskets, each containing a single order.
+  """
   orders = [
     Order(latitude=40.7128, longitude=-74.0060),
     Order(latitude=40.7218, longitude=-74.0060),
@@ -71,7 +96,12 @@ async def test_sparse_orders():
 
 @pytest.mark.asyncio
 async def test_boundary_condition():
-  """Orders exactly at 0.5km boundary should be included."""
+  """
+  Tests basket creation with orders at the 0.5 km boundary.
+
+  Verifies that orders exactly at the 0.5 km radius boundary are
+  correctly included in the same basket, testing edge case handling.
+  """
   center = Order(latitude=40.7128, longitude=-74.0060)
 
   from geopy.distance import geodesic
@@ -92,7 +122,12 @@ async def test_boundary_condition():
 
 @pytest.mark.asyncio
 async def test_all_orders_assigned():
-  """Every order must be assigned to exactly one basket."""
+  """
+  Tests that all orders are assigned to exactly one basket.
+
+  Verifies complete coverage: every order appears in exactly one basket
+  with no duplicates or missing assignments.
+  """
   orders = [
     Order(latitude=40.7128 + i * 0.001, longitude=-74.0060 + i * 0.001)
     for i in range(20)
@@ -110,7 +145,13 @@ async def test_all_orders_assigned():
 
 @pytest.mark.asyncio
 async def test_radius_constraint():
-  """All orders in a basket must be within 0.5km of center."""
+  """
+  Tests that all orders in a basket are within 0.5 km of center.
+
+  Verifies the strict radius constraint by checking that every order
+  in each basket is within 0.5 km (with small floating-point tolerance)
+  of the basket's center coordinates.
+  """
   orders = [
     Order(latitude=40.7128 + i * 0.0005, longitude=-74.0060 + i * 0.0005)
     for i in range(15)
@@ -127,7 +168,12 @@ async def test_radius_constraint():
 
 @pytest.mark.asyncio
 async def test_deterministic_results():
-  """Same input should produce same output."""
+  """
+  Tests that identical inputs produce identical outputs.
+
+  Verifies deterministic behavior by running the algorithm twice with
+  the same input and comparing the number and structure of baskets.
+  """
   orders = [
     Order(latitude=40.7128 + i * 0.0003, longitude=-74.0060 + i * 0.0003)
     for i in range(10)
@@ -153,7 +199,13 @@ async def test_deterministic_results():
 
 @pytest.mark.asyncio
 async def test_minimize_baskets():
-  """Algorithm should minimize number of baskets."""
+  """
+  Tests that the algorithm minimizes the number of baskets.
+
+  Verifies optimization by checking that orders in distinct clusters
+  are grouped efficiently, minimizing total basket count while
+  maintaining the 0.5 km radius constraint.
+  """
   clusters = [
     (40.7128, -74.0060),
     (40.7228, -74.0060),
@@ -179,7 +231,13 @@ async def test_minimize_baskets():
 
 @pytest.mark.asyncio
 async def test_precision_edge_cases():
-  """Test floating-point precision handling."""
+  """
+  Tests handling of floating-point precision edge cases.
+
+  Verifies that orders with very similar but not identical coordinates
+  are correctly processed, ensuring numerical stability in distance
+  calculations.
+  """
   orders = [
     Order(latitude=40.7128, longitude=-74.0060),
     Order(latitude=40.7128000001, longitude=-74.0060000001),
@@ -194,7 +252,13 @@ async def test_precision_edge_cases():
 
 @pytest.mark.asyncio
 async def test_mixed_density():
-  """Mix of dense and sparse orders."""
+  """
+  Tests basket creation with mixed order density.
+
+  Verifies that the algorithm correctly handles a combination of
+  dense clusters and sparse orders, creating appropriate baskets
+  for each scenario while maintaining radius constraints.
+  """
   cluster_orders = [
     Order(latitude=40.7128 + i * 0.0001, longitude=-74.0060 + i * 0.0001)
     for i in range(8)
@@ -220,7 +284,12 @@ async def test_mixed_density():
 
 @pytest.mark.asyncio
 async def test_radius_strictly_05km():
-  """Basket radius must be exactly 0.5km."""
+  """
+  Tests that basket radius is exactly 0.5 km.
+
+  Verifies that all created baskets have a radius value of exactly
+  0.5 km, ensuring consistency in the basket configuration.
+  """
   body = BasketsCreate(orders=[Order(latitude=40.7128, longitude=-74.0060)])
   baskets = await create_baskets(body)
 
@@ -229,7 +298,12 @@ async def test_radius_strictly_05km():
 
 @pytest.mark.asyncio
 async def test_orders_just_outside_boundary():
-  """Orders just beyond 0.5km should be in separate baskets."""
+  """
+  Tests basket creation with orders just beyond 0.5 km boundary.
+
+  Verifies that orders slightly beyond the 0.5 km radius are correctly
+  placed in separate baskets, ensuring strict radius enforcement.
+  """
   center = Order(latitude=40.7128, longitude=-74.0060)
 
   from geopy.distance import geodesic

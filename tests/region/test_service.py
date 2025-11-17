@@ -9,7 +9,12 @@ from src.region.type import Region
 
 @pytest.mark.asyncio
 async def test_get_regions_single_polygon():
-  """Test loading regions with single Polygon."""
+  """
+  Tests loading regions from GeoJSON with single Polygon geometry.
+
+  Verifies that a GeoJSON FeatureCollection with a single Polygon feature
+  is correctly parsed and converted to a Region object.
+  """
   mock_data = {
     "type": "FeatureCollection",
     "features": [
@@ -34,7 +39,12 @@ async def test_get_regions_single_polygon():
 
 @pytest.mark.asyncio
 async def test_get_regions_multi_polygon():
-  """Test loading regions with MultiPolygon."""
+  """
+  Tests loading regions from GeoJSON with MultiPolygon geometry.
+
+  Verifies that a GeoJSON FeatureCollection with a MultiPolygon feature
+  is correctly parsed and converted to a Region object.
+  """
   mock_data = {
     "type": "FeatureCollection",
     "features": [
@@ -62,7 +72,12 @@ async def test_get_regions_multi_polygon():
 
 @pytest.mark.asyncio
 async def test_get_regions_multiple_regions():
-  """Test loading multiple regions."""
+  """
+  Tests loading multiple regions from GeoJSON FeatureCollection.
+
+  Verifies that a GeoJSON file containing multiple features is correctly
+  parsed, with each feature converted to a separate Region object.
+  """
   mock_data = {
     "type": "FeatureCollection",
     "features": [
@@ -94,7 +109,12 @@ async def test_get_regions_multiple_regions():
 
 @pytest.mark.asyncio
 async def test_get_regions_empty_features():
-  """Test loading empty feature collection."""
+  """
+  Tests loading empty GeoJSON FeatureCollection.
+
+  Verifies that a GeoJSON file with no features returns an empty
+  list of regions without errors.
+  """
   mock_data = {"type": "FeatureCollection", "features": []}
 
   with patch("builtins.open", mock_open(read_data=json.dumps(mock_data))):
@@ -105,7 +125,12 @@ async def test_get_regions_empty_features():
 
 @pytest.mark.asyncio
 async def test_region_model_validation():
-  """Test Region model validates correctly."""
+  """
+  Tests that Region model validates and stores data correctly.
+
+  Verifies that a Region object can be instantiated with valid data
+  and that all attributes are correctly stored and accessible.
+  """
   region = Region(
     name="Test",
     type="Polygon",

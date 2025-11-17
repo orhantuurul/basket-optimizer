@@ -9,15 +9,19 @@ def calculate_distance(
   end: tuple[float, float],
 ) -> float:
   """
-  Calculate the great circle distance between two points on Earth
-  using the Haversine formula.
+  Calculates the great circle distance between two points on Earth.
+
+  Uses the Haversine formula to compute the shortest distance between
+  two points on the surface of a sphere (Earth), accounting for the
+  planet's curvature.
 
   Args:
-      start: First point as tuple (latitude, longitude)
-      end: Second point as tuple (latitude, longitude)
+    start: First point as (latitude, longitude) tuple in degrees.
+    end: Second point as (latitude, longitude) tuple in degrees.
 
   Returns:
-      Distance in kilometers
+    Distance between the two points in kilometers. Returns 0.0 if
+    both points are identical.
   """
   distance = geodesic(start, end)
   return distance.kilometers
@@ -25,17 +29,25 @@ def calculate_distance(
 
 def build_spatial_tree(orders: list[Order]) -> cKDTree:
   """
-  Build a spatial index (cKDTree) from orders for fast radius queries.
+  Builds a spatial index (cKDTree) from orders for fast radius queries.
 
-  Note: cKDTree uses Euclidean distance, which is an approximation for
-  geospatial coordinates. We use it for fast filtering, then validate
-  with Haversine distance for accuracy.
+  Creates a compressed k-d tree data structure for efficient spatial
+  queries. The tree uses Euclidean distance as an approximation for
+  geospatial coordinates, which is then validated with Haversine distance
+  for accuracy in query_radius_tree.
 
   Args:
-    orders: List of orders with latitude/longitude
+    orders: List of Order objects, each with latitude and longitude
+      attributes.
 
   Returns:
-    cKDTree spatial index
+    cKDTree spatial index containing coordinates from all orders.
+    The tree can be queried for points within a given radius efficiently.
+
+  Note:
+    cKDTree uses Euclidean distance which is an approximation for
+    geospatial coordinates. Results are validated with Haversine
+    distance in query_radius_tree for accuracy.
   """
   coordinates = [[order.latitude, order.longitude] for order in orders]
   return cKDTree(coordinates)
@@ -48,19 +60,24 @@ def query_radius_tree(
   orders: list[Order],
 ) -> list[int]:
   """
-  Query spatial tree for points within radius, validated with Haversine.
+  Queries spatial tree for points within radius, validated with Haversine.
 
-  Uses cKDTree for fast candidate selection, then validates with
-  Haversine distance for geospatial accuracy.
+  Uses cKDTree for fast candidate selection using Euclidean distance
+  approximation, then validates each candidate with Haversine distance
+  for geospatial accuracy. This two-stage approach provides both speed
+  and accuracy.
 
   Args:
-    tree: cKDTree spatial index
-    center: Center point (Order)
-    radius_km: Radius in kilometers
-    orders: List of all orders (for validation)
+    tree: cKDTree spatial index built from orders.
+    center: Center point as an Order object with latitude and longitude.
+    radius: Search radius in kilometers.
+    orders: List of all Order objects used to build the tree, needed
+      for Haversine validation.
 
   Returns:
-    List of indices of orders within the radius (inclusive of boundary)
+    List of integer indices corresponding to orders within the specified
+    radius (inclusive of boundary). Indices refer to positions in the
+    orders list.
   """
   radius_deg = radius / 111.0
 

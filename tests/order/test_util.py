@@ -5,7 +5,12 @@ from src.region.type import Region
 
 
 def test_region_polygon_single():
-  """Test converting single Polygon region."""
+  """
+  Tests conversion of a single Polygon region to Shapely Polygon.
+
+  Verifies that a Region object with type "Polygon" is correctly converted
+  to a Shapely Polygon object with valid area.
+  """
   region = Region(
     name="Test",
     type="Polygon",
@@ -19,7 +24,12 @@ def test_region_polygon_single():
 
 
 def test_region_polygon_multi():
-  """Test converting MultiPolygon region."""
+  """
+  Tests conversion of a MultiPolygon region to Shapely MultiPolygon.
+
+  Verifies that a Region object with type "MultiPolygon" is correctly
+  converted to a Shapely MultiPolygon object containing multiple polygons.
+  """
   region = Region(
     name="Test",
     type="MultiPolygon",
@@ -36,7 +46,12 @@ def test_region_polygon_multi():
 
 
 def test_point_in_polygon_single():
-  """Test generating point inside single polygon."""
+  """
+  Tests generation of a random point inside a single polygon.
+
+  Verifies that the generated point lies within or on the boundary of
+  the polygon using Shapely's contains or touches methods.
+  """
   polygon = Polygon([[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]])
 
   x, y = point_in_polygon(polygon)
@@ -46,7 +61,12 @@ def test_point_in_polygon_single():
 
 
 def test_point_in_polygon_multi():
-  """Test generating point inside MultiPolygon."""
+  """
+  Tests generation of a random point inside a MultiPolygon.
+
+  Verifies that the generated point lies within or on the boundary of
+  at least one of the MultiPolygon's constituent polygons.
+  """
   polygons = [
     Polygon([[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]),
     Polygon([[2, 2], [3, 2], [3, 3], [2, 3], [2, 2]]),
@@ -60,7 +80,13 @@ def test_point_in_polygon_multi():
 
 
 def test_point_in_polygon_deterministic_bounds():
-  """Test that generated points are within polygon bounds."""
+  """
+  Tests that generated points are within polygon bounding box.
+
+  Verifies that multiple generated points all fall within the polygon's
+  bounding box coordinates, ensuring the rejection sampling algorithm
+  respects spatial boundaries.
+  """
   polygon = Polygon([[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]])
 
   for _ in range(10):
@@ -70,7 +96,12 @@ def test_point_in_polygon_deterministic_bounds():
 
 
 def test_point_in_polygon_complex_shape():
-  """Test generating point in complex polygon shape."""
+  """
+  Tests generation of a random point in a complex polygon shape.
+
+  Verifies that the rejection sampling algorithm correctly handles
+  non-rectangular polygons with irregular boundaries.
+  """
   polygon = Polygon([[0, 0], [5, 0], [5, 2], [2, 2], [2, 5], [0, 5], [0, 0]])
 
   x, y = point_in_polygon(polygon)

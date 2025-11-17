@@ -1,6 +1,6 @@
 "use client";
 
-import { fetcher } from "@/lib/utils";
+import { fetcher } from "@/lib/fetcher";
 import { SWRConfig } from "swr";
 
 export function SwrProvider({ children }: { children: React.ReactNode }) {

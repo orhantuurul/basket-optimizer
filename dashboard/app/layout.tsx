@@ -1,5 +1,6 @@
-import { SwrProvider } from "@/components/swr-provider";
-import { ThemeProvider } from "@/components/theme-provider";
+import { SwrProvider } from "@/components/providers/swr-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -44,7 +45,10 @@ export default function RootLayout({ children }: RootLayoutProps) {
           enableSystem
           disableTransitionOnChange
         >
-          <SwrProvider>{children}</SwrProvider>
+          <SwrProvider>
+            {children}
+            <Toaster />
+          </SwrProvider>
         </ThemeProvider>
       </body>
     </html>

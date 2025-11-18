@@ -49,6 +49,14 @@ export function MultiSelect({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
+  const filteredOptions = useMemo(() => {
+    return options.filter((option) => {
+      const label = option.label.toLowerCase();
+      const value = search.toLowerCase();
+      return label.includes(value);
+    });
+  }, [options, search]);
+
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       setSearch("");
@@ -63,20 +71,6 @@ export function MultiSelect({
       onValuesChange(values.filter((i) => i !== value));
     },
     [onValuesChange, values]
-  );
-
-  const handleSelectAll = () => {
-    const newValues =
-      values.length === options.length ? [] : options.map((opt) => opt.value);
-    onValuesChange(newValues);
-  };
-
-  const filteredOptions = useMemo(
-    () =>
-      options.filter((option) =>
-        option.label.toLowerCase().includes(search.toLowerCase())
-      ),
-    [options, search]
   );
 
   useLayoutEffect(() => {
@@ -132,19 +126,14 @@ export function MultiSelect({
         className="w-(--radix-popover-trigger-width) p-0"
         align="start"
       >
-        <Command className={className}>
-          <CommandInput placeholder="Search..." onValueChange={setSearch} />
+        <Command shouldFilter={false} className={className}>
+          <CommandInput
+            placeholder="Search..."
+            value={search}
+            onValueChange={setSearch}
+          />
           <CommandList>
             <CommandEmpty>No item found.</CommandEmpty>
-            <CommandItem onSelect={handleSelectAll} className="border-b">
-              <Check
-                className={cn(
-                  "mr-2 h-4 w-4",
-                  values.length === options.length ? "opacity-100" : "opacity-0"
-                )}
-              />
-              {values.length === options.length ? "Deselect All" : "Select All"}
-            </CommandItem>
             <CommandGroup className="max-h-64 overflow-auto">
               {filteredOptions.map((option) => (
                 <CommandItem

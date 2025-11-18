@@ -1,9 +1,9 @@
 services:
-  basket-optimizer:
+  service:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: basket-optimizer
+    container_name: service
     ports:
       - "8080:8080"
     environment:
@@ -19,10 +19,10 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://basket-optimizer:8080
+      - NEXT_PUBLIC_API_URL=http://service:8080
       - NODE_ENV=production
     depends_on:
-      - basket-optimizer
+      - service
     networks:
       - basket-optimizer-network
     restart: unless-stopped

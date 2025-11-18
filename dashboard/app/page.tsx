@@ -9,7 +9,7 @@ import { useBaskets } from "@/stores/baskets";
 import { useOrders } from "@/stores/orders";
 import { Region } from "@/types/region";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import useSWR from "swr";
 
 const Map = dynamic(() => import("@/components/map").then((mod) => mod.Map), {
@@ -23,6 +23,11 @@ export default function Home() {
   const { baskets } = useBaskets();
   const [selectedRegions, setSelectedRegions] = useState<Region[]>([]);
 
+  const sortedRegions = useMemo(() => {
+    const comparer = new Intl.Collator("tr-TR", { sensitivity: "base" });
+    return regions?.sort((a, b) => comparer.compare(a.name, b.name));
+  }, [regions]);
+
   const handleRegionsSelect = (values: string[]) => {
     const filtered = regions?.filter((region) => values.includes(region.name));
     setSelectedRegions(filtered ?? []);
@@ -30,7 +35,9 @@ export default function Home() {
 
   return (
     <main className="flex h-screen w-full overflow-hidden bg-background">
-      <Map selectedRegions={selectedRegions} />
+      <div className="flex-1">
+        <Map selectedRegions={selectedRegions} />
+      </div>
       <Sheet>
         <div className="space-y-10">
           <div className="space-y-4">
@@ -40,7 +47,7 @@ export default function Home() {
             <MultiSelect
               values={selectedRegions.map((region) => region.name)}
               options={
-                regions?.map((region) => ({
+                sortedRegions?.map((region) => ({
                   label: region.name,
                   value: region.name,
                 })) ?? []
